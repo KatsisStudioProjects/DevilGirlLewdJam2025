@@ -5,6 +5,8 @@ namespace LewdJam2025.Controllers
 {
     public class PlayerController : MonoBehaviour
     {
+        #region Properties
+
         public static PlayerController Instance;
 
         [SerializeField] GameObject ObjectToMove;
@@ -16,24 +18,26 @@ namespace LewdJam2025.Controllers
         private float _jumpForce;
         [SerializeField] private bool _isCrouching, _isAttacking, _onGround, _canDoubleJump;
 
-        [SerializeField] float horMoveSpeed;
-        [SerializeField] float vertMoveSpeed;
+        [SerializeField] float _horMoveSpeed;
+        [SerializeField] float _vertMoveSpeed;
 
         [SerializeField] Transform _fireballSpawnLocation;
         [SerializeField] GameObject _fireballRef;
 
         [SerializeField] LayerMask _groundMask, _wallMask;
 
-        public InputActionReference move;
-        public InputActionReference attack;
-        public InputActionReference jump;
+        public InputActionReference MoveAction;
+        public InputActionReference AttackAction;
+        public InputActionReference JumpAction;
 
         private CapsuleCollider _playerCollider;
+        //Probably should change to _canMove
+        private bool _canMove;
 
-        private bool _onConsole;
-
+        #endregion
         void Awake()
         {
+            // No need to have singleton :) Perhaps using OnTriggerEnter might be better! 
             Instance = this;
 
             if (ObjectToMove == null)
@@ -45,88 +49,94 @@ namespace LewdJam2025.Controllers
             _isCrouching = false;
             _fireballRef.SetActive(false);
             _playerCollider = GetComponent<CapsuleCollider>();
-            _onConsole = false;
+            _canMove = false;
         }
 
         // Update is called once per frame
         void Update()
         {
-            if(!_onConsole)
+            if(!_canMove)
             {
-                _moveDirection = move.action.ReadValue<Vector2>();
+                _moveDirection = MoveAction.action.ReadValue<Vector2>();
+ 
+                if (JumpAction.action.WasPressedThisFrame() && CanStandCheck()) Jump();
 
-                if (jump.action.WasPressedThisFrame() && CanStandCheck())
-                {
-                    Jump();
-                }
+                HandleCrouching();
 
-                if (_isCrouching)
-                {
-                    _playerCollider.height = 1f;
-                    _playerCollider.center = new Vector3(0f, 0.5f, 0f);
-                }
-                else
-                {
-                    _playerCollider.height = 2f;
-                    _playerCollider.center = new Vector3(0f, 1f, 0f);
-                }
-
-                _animator.SetBool("IsAttacking", _isAttacking = attack.action.ReadValue<float>() > 0);
+                _animator.SetBool("IsAttacking", _isAttacking = AttackAction.action.ReadValue<float>() > 0);
             }
             else
             {
                 //On a console, change up code.
             }
             
-
         }
 
         private void FixedUpdate()
         {
-            if (_onConsole) return;
-
             HandleMovement();
             _animator.SetBool("OnGround", _onGround = GroundCheck());
         }
 
+        #region Movement
         void HandleMovement()
         {
+            if(!_canMove) return;
+
             _isCrouching = _moveDirection.y < -0.1f || !CanStandCheck();
             _animator.SetBool("IsCrouching", _isCrouching);
 
-            float hSpeed = horMoveSpeed;
+            // If crouching, reduce horizontal speed
+            float hSpeed = _isCrouching ? _horMoveSpeed * 0.75f : _horMoveSpeed;
 
-            hSpeed = _isCrouching ? horMoveSpeed / 1.75f : horMoveSpeed;
-
+            // Don't move if attacking
             if (_isAttacking)
             {
                 rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, rb.linearVelocity.z);
                 return;
             }
 
+            // Handle horizontal movement
             if (rb.linearVelocity.x > 0.1 || rb.linearVelocity.x < -0.1) _animator.SetBool("IsRunning", true);
             else _animator.SetBool("IsRunning", false);
 
+            // Rotate the model based on movement direction
             if (rb.linearVelocity.x > 0.1) _modelTransform.localRotation = Quaternion.Euler(0f, 0f, 0f);
             else if (rb.linearVelocity.x < -0.1) _modelTransform.localRotation = Quaternion.Euler(0f, 180f, 0f);
 
+            // Ramping horizontal movement
             float hRamp = Mathf.Lerp(rb.linearVelocity.x, _moveDirection.x * hSpeed, Time.deltaTime);
-
+            // Apply horizontal movement
             rb.linearVelocity = new Vector3(hRamp, rb.linearVelocity.y, rb.linearVelocity.z);
         }
+        void HandleCrouching()
+        {
+            if (!_canMove) return;
 
+            if (_isCrouching)
+            {
+                _playerCollider.height = 1f;
+                _playerCollider.center = new Vector3(0f, 0.5f, 0f);
+            }
+            else
+            {
+                _playerCollider.height = 2f;
+                _playerCollider.center = new Vector3(0f, 1f, 0f);
+            }
+        }
         void Jump()
         {
             if (!_onGround && !_canDoubleJump) return;
 
-            if (!_onGround && _canDoubleJump)
-                _canDoubleJump = false;
+            if (!_onGround && _canDoubleJump) _canDoubleJump = false;
 
             rb.linearVelocity = new Vector3(rb.linearVelocity.x, 0f, rb.linearVelocity.z);
-            rb.AddForce(Vector3.up * vertMoveSpeed);
-
+            rb.AddForce(Vector3.up * _vertMoveSpeed);
         }
 
+        #endregion
+
+        #region Actions
         public void ShootAFireball()
         {
             if (!_onGround) return;
@@ -137,8 +147,9 @@ namespace LewdJam2025.Controllers
 
             fireball.SetActive(true);
         }
+        #endregion
 
-
+        #region Checks
         bool CanStandCheck()
         {
             RaycastHit hitAny;
@@ -159,7 +170,6 @@ namespace LewdJam2025.Controllers
             }
         }
 
-
         bool GroundCheck()
         {
             RaycastHit hitGround;
@@ -179,7 +189,7 @@ namespace LewdJam2025.Controllers
                 //Debug.Log("Not On Ground");
                 return false;
             }
-                
         }
+        #endregion
     }
 }
