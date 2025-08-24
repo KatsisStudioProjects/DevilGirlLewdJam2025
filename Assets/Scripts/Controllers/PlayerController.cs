@@ -81,7 +81,7 @@ namespace LewdJam2025.Controllers
         #region Movement
         void HandleMovement()
         {
-            if(!_canMove) return;
+            //if(!_canMove) return;
 
             _isCrouching = _moveDirection.y < -0.1f || !CanStandCheck();
             _animator.SetBool("IsCrouching", _isCrouching);
@@ -111,7 +111,7 @@ namespace LewdJam2025.Controllers
         }
         void HandleCrouching()
         {
-            if (!_canMove) return;
+            //if (!_canMove) return;
 
             if (_isCrouching)
             {

@@ -11,11 +11,16 @@ namespace LewdJam2025.Controllers
 
         [SerializeField] TMPro.TextMeshPro textMeshPro;
 
+        [SerializeField] float _detectionRadius;
+        [SerializeField] LayerMask _playerMask;
+
         int faceIndex = 0;
         float timeDelay = 3f;
 
         private void Update()
         {
+            CheckPlayerInRange();
+
             if(timeDelay <= 0)
             {
                 timeDelay = 3f;
@@ -31,6 +36,29 @@ namespace LewdJam2025.Controllers
         void SetFaceMaterial(int matIndex)
         {
             faceRenderer.material = Faces[matIndex];
+        }
+
+        void CheckPlayerInRange()
+        {
+            Collider[] hits = Physics.OverlapSphere(transform.position, _detectionRadius, _playerMask);
+
+            if(hits.Length > 0)
+            {
+                //Player in range, display hack text
+                GameManager.Instance.AssignInRangeConsole(this, true);
+                textMeshPro.gameObject.SetActive(true);
+            }
+            else
+            {
+                GameManager.Instance.AssignInRangeConsole(this, false);
+                textMeshPro.gameObject.SetActive(false);
+            }
+        }
+
+        void OnDrawGizmos()
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(transform.position, _detectionRadius);
         }
 
         void UsePanel()
