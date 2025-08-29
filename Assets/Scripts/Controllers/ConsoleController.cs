@@ -2,35 +2,48 @@ using UnityEngine;
 
 namespace LewdJam2025.Controllers
 {
-    public class ConsoleController : MonoBehaviour, IInteractable
+    public class ConsoleController : MonoBehaviour
     {
         [SerializeField] Material[] Faces;
         [SerializeField] Renderer faceRenderer;
 
-        [SerializeField] Transform PlayerAnchor;
+        [SerializeField] Transform _playerAnchor;
+        [SerializeField] Transform _cameraAnchor;
 
-        [SerializeField] TMPro.TextMeshPro textMeshPro;
+        [SerializeField] TMPro.TextMeshPro _hackText;
+        [SerializeField] TMPro.TextMeshPro _timerText;
 
         [SerializeField] float _detectionRadius;
         [SerializeField] LayerMask _playerMask;
+        [SerializeField] MinigameController _minigameController;
 
-        int faceIndex = 0;
-        float timeDelay = 3f;
+        public bool InZone => _minigameController.InZone;
+
+        int _faceIndex = 0;
+        float _timerMax = 10.9f;
+        float _timer;
+        bool _onConsole = false;
 
         private void Update()
         {
-            CheckPlayerInRange();
-
-            if(timeDelay <= 0)
+            if(!_onConsole)
+                CheckPlayerInRange();
+            else
             {
-                timeDelay = 3f;
-                SetFaceMaterial(faceIndex);
-                faceIndex++;
-                if (faceIndex >= Faces.Length)
-                    faceIndex = 0;
+                _timer -= Time.deltaTime;
+                _timerText.text = ((int)_timer).ToString();
             }
 
-            timeDelay -= Time.deltaTime;
+            //if (_timeDelay <= 0)
+            //{
+            //    _timeDelay = 3f;
+            //    SetFaceMaterial(_faceIndex);
+            //    _faceIndex++;
+            //    if (_faceIndex >= Faces.Length)
+            //        _faceIndex = 0;
+            //}
+
+            //_timeDelay -= Time.deltaTime;
         }
 
         void SetFaceMaterial(int matIndex)
@@ -42,16 +55,17 @@ namespace LewdJam2025.Controllers
         {
             Collider[] hits = Physics.OverlapSphere(transform.position, _detectionRadius, _playerMask);
 
-            if(hits.Length > 0)
+            if (hits.Length > 0)
             {
                 //Player in range, display hack text
                 GameManager.Instance.AssignInRangeConsole(this, true);
-                textMeshPro.gameObject.SetActive(true);
+                _hackText.gameObject.SetActive(true);
             }
             else
             {
                 GameManager.Instance.AssignInRangeConsole(this, false);
-                textMeshPro.gameObject.SetActive(false);
+                _hackText.gameObject.SetActive(false);
+                _onConsole = false;
             }
         }
 
@@ -61,16 +75,27 @@ namespace LewdJam2025.Controllers
             Gizmos.DrawWireSphere(transform.position, _detectionRadius);
         }
 
-        void UsePanel()
+        public void UsePanel(Transform player, Transform camera)
         {
-            //PlayerController.Instance.transform.position = PlayerAnchor.position;
+            _onConsole = true;
+            player.position = _playerAnchor.position;
 
-            //textMeshPro.gameObject.SetActive(!textMeshPro.gameObject.activeSelf);
+            _faceIndex++;
+            if (_faceIndex >= Faces.Length)
+                _faceIndex = 0;
+
+            SetFaceMaterial(_faceIndex);
+
+            _timer = _timerMax;
+            _timerText.text = ((int)_timer).ToString();
+            _minigameController.gameObject.SetActive(true);
+
+            _hackText.gameObject.SetActive(false);
         }
 
-        public void Interact(GameObject interacter)
+        public Vector3 GetAnchorPos()
         {
-            if (interacter.GetComponent<PlayerController>() == null) return;
+            return _cameraAnchor.position;
         }
     }
 }

@@ -12,7 +12,7 @@ namespace LewdJam2025.Controllers
         float _updateMarkerPos = 0f;
         float _currentTime = 0f;
 
-        public bool InZone => _updateMarkerPos <= 30f || _updateMarkerPos >= 330f;
+        public bool InZone => _updateMarkerPos <= 50f || _updateMarkerPos >= 310f;
 
         private void Update()
         {

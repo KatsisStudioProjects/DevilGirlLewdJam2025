@@ -26,9 +26,12 @@ namespace LewdJam2025.Controllers
 
         [SerializeField] LayerMask _groundMask, _wallMask;
 
+        [SerializeField] GameObject _pleasureMeterHolder;
+
         public InputActionReference MoveAction;
         public InputActionReference AttackAction;
         public InputActionReference JumpAction;
+        public InputActionReference InteractAction;
 
         private CapsuleCollider _playerCollider;
         //Probably should change to _canMove
@@ -49,17 +52,22 @@ namespace LewdJam2025.Controllers
             _isCrouching = false;
             _fireballRef.SetActive(false);
             _playerCollider = GetComponent<CapsuleCollider>();
-            _canMove = false;
+            _canMove = true;
         }
 
         // Update is called once per frame
         void Update()
         {
-            if(!_canMove)
+            if(_canMove)
             {
                 _moveDirection = MoveAction.action.ReadValue<Vector2>();
  
                 if (JumpAction.action.WasPressedThisFrame() && CanStandCheck()) Jump();
+
+                if(InteractAction.action.WasPressedThisFrame())
+                {
+                    GameManager.Instance.BeginConsoleMinigame();
+                }
 
                 HandleCrouching();
 
@@ -68,6 +76,18 @@ namespace LewdJam2025.Controllers
             else
             {
                 //On a console, change up code.
+                if(JumpAction.action.WasPressedThisFrame() || InteractAction.action.WasPressedThisFrame() || AttackAction.action.WasPressedThisFrame())
+                {
+                    if(GameManager.Instance.CheckConsole())
+                    {
+
+                    }
+                    else
+                    {
+
+                    }
+                }
+                
             }
             
         }
@@ -134,6 +154,8 @@ namespace LewdJam2025.Controllers
             rb.AddForce(Vector3.up * _vertMoveSpeed);
         }
 
+        
+
         #endregion
 
         #region Actions
@@ -146,6 +168,14 @@ namespace LewdJam2025.Controllers
             fireball.GetComponent<ProjectileController>().SetupProjectile(_modelTransform.localRotation.y == 0 ? 1 : -1, true);
 
             fireball.SetActive(true);
+        }
+        
+        public void StartConsole()
+        {
+            _canMove = false;
+            rb.linearVelocity  = _moveDirection = Vector3.zero;
+            _animator.SetBool("UsingPanel", true);
+            _pleasureMeterHolder.SetActive(true);
         }
         #endregion
 
