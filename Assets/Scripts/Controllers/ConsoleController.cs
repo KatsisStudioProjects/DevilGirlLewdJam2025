@@ -1,3 +1,5 @@
+using System.Collections;
+using Unity.VisualScripting;
 using UnityEngine;
 
 namespace LewdJam2025.Controllers
@@ -17,38 +19,39 @@ namespace LewdJam2025.Controllers
         [SerializeField] LayerMask _playerMask;
         [SerializeField] MinigameController _minigameController;
 
+        [SerializeField] DoorController _doorController;
+
         public bool InZone => _minigameController.InZone;
 
         int _faceIndex = 0;
         float _timerMax = 10.9f;
         float _timer;
         bool _onConsole = false;
+        bool _consoleOpen = false;
+
+        public bool ConsoleOpen => _consoleOpen;
 
         private void Update()
         {
-            if(!_onConsole)
+            if (_consoleOpen) return;
+
+            if (!_onConsole)
                 CheckPlayerInRange();
             else
             {
                 _timer -= Time.deltaTime;
                 _timerText.text = ((int)_timer).ToString();
             }
-
-            //if (_timeDelay <= 0)
-            //{
-            //    _timeDelay = 3f;
-            //    SetFaceMaterial(_faceIndex);
-            //    _faceIndex++;
-            //    if (_faceIndex >= Faces.Length)
-            //        _faceIndex = 0;
-            //}
-
-            //_timeDelay -= Time.deltaTime;
         }
 
         void SetFaceMaterial(int matIndex)
         {
             faceRenderer.material = Faces[matIndex];
+        }
+
+        public void AddToTimer()
+        {
+            _timer += 1.25f;
         }
 
         void CheckPlayerInRange()
@@ -73,6 +76,12 @@ namespace LewdJam2025.Controllers
         {
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, _detectionRadius);
+
+            if(_doorController != null)
+            {
+                Gizmos.color = Color.blue;
+                Gizmos.DrawLine(transform.position, _doorController.transform.position);
+            }
         }
 
         public void UsePanel(Transform player, Transform camera)
@@ -91,6 +100,27 @@ namespace LewdJam2025.Controllers
             _minigameController.gameObject.SetActive(true);
 
             _hackText.gameObject.SetActive(false);
+        }
+
+        public IEnumerator EndConsoleMinigame()
+        {
+            if (_consoleOpen) yield return null;
+            else
+            {
+                _faceIndex++;
+                _consoleOpen = true;
+                SetFaceMaterial(_faceIndex);
+                _minigameController.gameObject.SetActive(false);
+
+                yield return new WaitForSeconds(2f);
+
+                _faceIndex++;
+                SetFaceMaterial(_faceIndex);
+
+                _doorController.Open();
+            }
+
+
         }
 
         public Vector3 GetAnchorPos()

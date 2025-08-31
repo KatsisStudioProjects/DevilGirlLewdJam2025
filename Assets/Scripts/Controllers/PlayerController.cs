@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 namespace LewdJam2025.Controllers
 {
@@ -26,7 +27,7 @@ namespace LewdJam2025.Controllers
 
         [SerializeField] LayerMask _groundMask, _wallMask;
 
-        [SerializeField] GameObject _pleasureMeterHolder;
+        [SerializeField] Slider _pleasureMeterHolder;
 
         public InputActionReference MoveAction;
         public InputActionReference AttackAction;
@@ -36,6 +37,8 @@ namespace LewdJam2025.Controllers
         private CapsuleCollider _playerCollider;
         //Probably should change to _canMove
         private bool _canMove;
+
+        public bool CanMove { get { return _canMove; } }
 
         #endregion
         void Awake()
@@ -53,6 +56,8 @@ namespace LewdJam2025.Controllers
             _fireballRef.SetActive(false);
             _playerCollider = GetComponent<CapsuleCollider>();
             _canMove = true;
+            _pleasureMeterHolder.value = 0;
+            _pleasureMeterHolder.gameObject.SetActive(false);
         }
 
         // Update is called once per frame
@@ -80,7 +85,15 @@ namespace LewdJam2025.Controllers
                 {
                     if(GameManager.Instance.CheckConsole())
                     {
-
+                        _pleasureMeterHolder.value += 0.2f;
+                        if (_pleasureMeterHolder.value >= _pleasureMeterHolder.maxValue)
+                        {
+                            _animator.SetBool("UsingPanel", false);
+                            _animator.SetBool("Orgasm", true);
+                            _pleasureMeterHolder.value = 0f;
+                            _pleasureMeterHolder.gameObject.SetActive(false);
+                            GameManager.Instance.EndConsoleMinigame(true);
+                        }
                     }
                     else
                     {
@@ -173,9 +186,11 @@ namespace LewdJam2025.Controllers
         public void StartConsole()
         {
             _canMove = false;
+            GameManager.Instance.UpdateCameraPivot(1);
+            _modelTransform.localRotation = Quaternion.Euler(0f, 0f, 0f);
             rb.linearVelocity  = _moveDirection = Vector3.zero;
             _animator.SetBool("UsingPanel", true);
-            _pleasureMeterHolder.SetActive(true);
+            _pleasureMeterHolder.gameObject.SetActive(true);
         }
         #endregion
 
@@ -219,6 +234,14 @@ namespace LewdJam2025.Controllers
                 //Debug.Log("Not On Ground");
                 return false;
             }
+        }
+
+        public void OffConsoleToggle()
+        {
+            _canMove = true;
+            GameManager.Instance.UpdateCameraPivot(0);
+            _animator.SetBool("Orgasm", false);
+            transform.position = new Vector3(transform.position.x, transform.position.y, 4f);
         }
         #endregion
     }

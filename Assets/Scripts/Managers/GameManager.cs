@@ -10,6 +10,10 @@ public class GameManager : MonoBehaviour
 
     ConsoleController _consoleInRange;
 
+    float _consoleCheckDelayMax = 0.01f;
+    float _consoleCheckDelayTimer;
+
+    public int indy = 0;
 
     private void Awake()
     {
@@ -19,13 +23,25 @@ public class GameManager : MonoBehaviour
         {
             try { _playerController = FindFirstObjectByType<PlayerController>(); } catch { Debug.LogError("No Player found in scene."); }
         }
+
+        _consoleCheckDelayTimer = _consoleCheckDelayMax;
+    }
+
+    private void Start()
+    {
+        UpdateCameraPivot(0);
+    }
+
+    private void Update()
+    {
+        _consoleCheckDelayTimer -= Time.deltaTime;
     }
 
     public void AssignInRangeConsole(ConsoleController consoleInRange, bool enterRange)
     {
         if (enterRange)
             _consoleInRange = consoleInRange;
-        else //exit range
+        else if(!enterRange && consoleInRange == _consoleInRange) //exit range
             _consoleInRange = null;
     }
 
@@ -47,14 +63,16 @@ public class GameManager : MonoBehaviour
 
     public bool CheckConsole()
     {
-        if (_consoleInRange.InZone)
+        if (_consoleInRange.InZone && _consoleCheckDelayTimer <= 0f)
         {
-            Debug.Log("In");
+            //Debug.Log("In");
+            _consoleInRange.AddToTimer();
+            _consoleCheckDelayTimer = _consoleCheckDelayMax;
             return true;
         }
         else
         {
-            Debug.Log("Out");
+            //Debug.Log("Out");
             return false;
         }
     }
@@ -62,6 +80,16 @@ public class GameManager : MonoBehaviour
     public void EndConsoleMinigame(bool beatMinigame)
     {
         //check if game over or won
+        if(beatMinigame)
+        {
+            StartCoroutine(_consoleInRange.EndConsoleMinigame());
+            _consoleInRange = null;
+        }
+    }
+
+    public void UpdateCameraPivot(int p)
+    {
+        _cameraController.ChangePivot(p);
     }
     #endregion
 }

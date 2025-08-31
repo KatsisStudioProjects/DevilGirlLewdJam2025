@@ -5,10 +5,14 @@ namespace LewdJam2025.Controllers
 {
     public class CameraController : MonoBehaviour
     {
-        [SerializeField] private Transform target;
-        [SerializeField] private Transform lookatTarget;
+        [SerializeField] private Transform _target;
+        [SerializeField] private Transform _lookatTarget;
 
-        [SerializeField] private float yOffset;
+        [SerializeField] private float _yOffset;
+
+        [SerializeField] private Transform[] _pivots;
+
+        int _currentPivotIndex;
 
         bool _sideScrollFollow = true;
         Vector3 _sideScrollPosition;
@@ -16,33 +20,14 @@ namespace LewdJam2025.Controllers
 
         private void Start()
         {
-            _sideScrollPosition = new Vector3(target.position.x, target.position.y + yOffset, -10f);
+            _sideScrollPosition = new Vector3(_target.position.x, _target.position.y + _yOffset, -10f);
         }
 
         // Update is called once per frame
-        void Update()
+
+        public void ChangePivot(int pivotIndex)
         {
-            //transform.LookAt(lookatTarget);
-            //transform.position = Vector3.Lerp(transform.position, new Vector3(target.position.x, target.position.y + 2f, -10f), Time.deltaTime * 5f);
-
-
-            //Update sidescroll pos to follow player at all times
-            _sideScrollPosition = new Vector3(target.position.x, target.position.y + yOffset, -10f);
-            transform.position = _sideScrollPosition;
-
-        }
-
-        public void SetNewAnchor(Vector3 newAnchor)
-        {
-            if (newAnchor == null)
-            {
-                _sideScrollFollow = true; ;
-            }
-            else
-            {
-                _currentTrackPosition = newAnchor;
-                _sideScrollFollow = false;
-            }
+            transform.position = _pivots[pivotIndex].position;
         }
     }
 }
