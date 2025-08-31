@@ -1,4 +1,6 @@
 using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 
@@ -19,7 +21,7 @@ namespace LewdJam2025.Controllers
         [SerializeField] LayerMask _playerMask;
         [SerializeField] MinigameController _minigameController;
 
-        [SerializeField] DoorController _doorController;
+        [SerializeField] List<DoorController> _doorControllers;
 
         public bool InZone => _minigameController.InZone;
 
@@ -77,10 +79,13 @@ namespace LewdJam2025.Controllers
             Gizmos.color = Color.red;
             Gizmos.DrawWireSphere(transform.position, _detectionRadius);
 
-            if(_doorController != null)
+            if (_doorControllers != null)
             {
                 Gizmos.color = Color.blue;
-                Gizmos.DrawLine(transform.position, _doorController.transform.position);
+                foreach (DoorController con in _doorControllers)
+                {
+                    Gizmos.DrawLine(transform.position, con.transform.position);
+                }
             }
         }
 
@@ -117,10 +122,16 @@ namespace LewdJam2025.Controllers
                 _faceIndex++;
                 SetFaceMaterial(_faceIndex);
 
-                _doorController.Open();
+                foreach (DoorController con in _doorControllers)
+                {
+                    con.Open();
+                }
             }
+        }
 
-
+        public void AddDoorToList(DoorController door)
+        {
+            _doorControllers.Add(door);
         }
 
         public Vector3 GetAnchorPos()

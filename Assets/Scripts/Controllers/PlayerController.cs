@@ -63,27 +63,36 @@ namespace LewdJam2025.Controllers
         // Update is called once per frame
         void Update()
         {
-            if(_canMove)
+            if (_canMove)
             {
                 _moveDirection = MoveAction.action.ReadValue<Vector2>();
- 
+
                 if (JumpAction.action.WasPressedThisFrame() && CanStandCheck()) Jump();
 
-                if(InteractAction.action.WasPressedThisFrame())
+                if (InteractAction.action.WasPressedThisFrame())
                 {
                     GameManager.Instance.BeginConsoleMinigame();
                 }
 
                 HandleCrouching();
 
+                if (!CanStandCheck())
+                {
+                    GameManager.Instance.UpdateCameraPivot(2);
+                }
+                else if (CanStandCheck() && _canMove)
+                {
+                    GameManager.Instance.UpdateCameraPivot(0);
+                }
+
                 _animator.SetBool("IsAttacking", _isAttacking = AttackAction.action.ReadValue<float>() > 0);
             }
             else
             {
                 //On a console, change up code.
-                if(JumpAction.action.WasPressedThisFrame() || InteractAction.action.WasPressedThisFrame() || AttackAction.action.WasPressedThisFrame())
+                if ((JumpAction.action.WasPressedThisFrame() || InteractAction.action.WasPressedThisFrame() || AttackAction.action.WasPressedThisFrame()) && _pleasureMeterHolder.IsActive())
                 {
-                    if(GameManager.Instance.CheckConsole())
+                    if (GameManager.Instance.CheckConsole())
                     {
                         _pleasureMeterHolder.value += 0.2f;
                         if (_pleasureMeterHolder.value >= _pleasureMeterHolder.maxValue)
@@ -97,12 +106,12 @@ namespace LewdJam2025.Controllers
                     }
                     else
                     {
-
+                        _pleasureMeterHolder.value -= 0.2f;
                     }
                 }
-                
+
             }
-            
+
         }
 
         private void FixedUpdate()
@@ -167,7 +176,7 @@ namespace LewdJam2025.Controllers
             rb.AddForce(Vector3.up * _vertMoveSpeed);
         }
 
-        
+
 
         #endregion
 
@@ -182,13 +191,13 @@ namespace LewdJam2025.Controllers
 
             fireball.SetActive(true);
         }
-        
+
         public void StartConsole()
         {
             _canMove = false;
             GameManager.Instance.UpdateCameraPivot(1);
             _modelTransform.localRotation = Quaternion.Euler(0f, 0f, 0f);
-            rb.linearVelocity  = _moveDirection = Vector3.zero;
+            rb.linearVelocity = _moveDirection = Vector3.zero;
             _animator.SetBool("UsingPanel", true);
             _pleasureMeterHolder.gameObject.SetActive(true);
         }

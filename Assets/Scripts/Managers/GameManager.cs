@@ -10,7 +10,7 @@ public class GameManager : MonoBehaviour
 
     ConsoleController _consoleInRange;
 
-    float _consoleCheckDelayMax = 0.01f;
+    float _consoleCheckDelayMax = 0.1f;
     float _consoleCheckDelayTimer;
 
     public int indy = 0;
